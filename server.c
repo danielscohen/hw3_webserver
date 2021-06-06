@@ -12,26 +12,54 @@
 //
 
 // HW3: Parse the new arguments too
-void getargs(int *port, int argc, char *argv[])
+typedef struct Request{
+    int connfd;
+    char buf[MAXLINE];
+    char method[MAXLINE];
+    char uri[MAXLINE];
+    char version[MAXLINE];
+    char filename[MAXLINE];
+    char cgiargs[MAXLINE];
+} Request;
+
+pthread_t *waitingReqs;
+pthread_t *processingReqs;
+
+pthread_cond_t c;
+pthread_mutex_t m;
+
+void getargs(int *port, int *threads, int *queueSize, char *schedalg, int argc, char *argv[])
 {
-    if (argc < 2) {
+    if (argc < 5) {
 	fprintf(stderr, "Usage: %s <port>\n", argv[0]);
 	exit(1);
     }
     *port = atoi(argv[1]);
+    *threads = atoi(argv[2]);
+    *queueSize = atoi(argv[3]);
+    strcpy(schedalg, argv[4]);
 }
 
 
 int main(int argc, char *argv[])
 {
-    int listenfd, connfd, port, clientlen;
+    int listenfd, connfd, port, clientlen, numThreads, queueSize;
+    char* schedalg;
     struct sockaddr_in clientaddr;
 
-    getargs(&port, argc, argv);
+    getargs(&port, &numThreads, &queueSize, schedalg, argc, argv);
 
     // 
-    // HW3: Create some threads...
+    // HW3: Create some numThreads...
     //
+    pthread_t *threads = malloc(sizeof (pthread_t) * numThreads);
+    waitingReqs = malloc(sizeof (Request) * queueSize);
+    processingReqs = malloc(sizeof (Request) * queueSize);
+    for(int i = 0; i < numThreads; i++){
+        int res = pthread_create(&threads[i], NULL, requestHandle, NULL);
+        if(res) posix_error(res, "Posix Error!!");
+    }
+
 
     listenfd = Open_listenfd(port);
     while (1) {
@@ -40,7 +68,7 @@ int main(int argc, char *argv[])
 
 	// 
 	// HW3: In general, don't handle the request in the main thread.
-	// Save the relevant info in a buffer and have one of the worker threads 
+	// Save the relevant info in a buffer and have one of the worker numThreads
 	// do the work. 
 	// 
 	requestHandle(connfd);
