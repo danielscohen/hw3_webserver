@@ -2,6 +2,11 @@
 #include "queue.h"
 #include "request.h"
 
+
+pthread_cond_t c = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+int queueSize = 0;
+
 /************************** 
  * Error-handling functions
  **************************/

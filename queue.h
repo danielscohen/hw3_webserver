@@ -12,7 +12,7 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-Node *reqQueueHead = NULL;
+Node *reqQueueHead;
 
 void enqueue(Request req);
 Request dequeue();

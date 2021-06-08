@@ -4,6 +4,8 @@
 
 #include "queue.h"
 
+Node *reqQueueHead = NULL;
+
 void enqueue(Request req) {
     Node *node = malloc(sizeof(Node));
     if(node == NULL) app_error("Memory Allocation Error");

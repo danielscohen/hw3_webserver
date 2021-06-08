@@ -50,11 +50,9 @@ typedef struct {
 /* External variables */
 extern int h_errno;    /* defined by BIND for DNS errors */ 
 extern char **environ; /* defined by libc */
-extern pthread_t *waitingReqsQueue;
-extern pthread_t *processingReqsQueue;
-extern pthread_cond_t c = PTHREAD_COND_INITIALIZER;
-extern pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-extern int queueSize = 0;
+pthread_cond_t c;
+pthread_mutex_t m;
+int queueSize;
 
 /* Misc constants */
 #define MAXLINE  8192  /* max text line length */

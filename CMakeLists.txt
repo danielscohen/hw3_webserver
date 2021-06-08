@@ -3,4 +3,8 @@ project(hw3_webserver C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(hw3_webserver main.c request.c segel.c server.c output.c queue.c queue.h)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+add_executable(hw3_webserver.c request.c segel.c server.c queue.c)
+target_link_libraries(Threads::Threads)

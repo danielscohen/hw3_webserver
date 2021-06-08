@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     //
     pthread_t *threads = malloc(sizeof (pthread_t) * numThreads);
     for(int i = 0; i < numThreads; i++){
-        int res = pthread_create(&threads[i], NULL, requestHandle, NULL);
+        int res = pthread_create(&threads[i], NULL, workerThreadMain, NULL);
         if(res) posix_error(res, "Posix Error!!");
     }
 
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
 	// Save the relevant info in a buffer and have one of the worker numThreads
 	// do the work. 
 	// 
-	requestHandle(connfd);
 
 	Close(connfd);
     }
