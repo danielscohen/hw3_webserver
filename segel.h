@@ -50,11 +50,23 @@ typedef struct {
 /* External variables */
 extern int h_errno;    /* defined by BIND for DNS errors */ 
 extern char **environ; /* defined by libc */
+extern pthread_t *waitingReqsQueue;
+extern pthread_t *processingReqsQueue;
+extern pthread_cond_t c = PTHREAD_COND_INITIALIZER;
+extern pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+extern int queueSize = 0;
 
 /* Misc constants */
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ  1024  /* second argument to listen() */
+
+typedef struct Request{
+    int connfd;
+    char method[MAXLINE];
+    char uri[MAXLINE];
+    char version[MAXLINE];
+} Request;
 
 /* Our own error-handling functions */
 void unix_error(char *msg);
@@ -119,6 +131,8 @@ int open_listenfd(int portno);
 
 /* Wrappers for client/server helper functions */
 int Open_clientfd(char *hostname, int port);
-int Open_listenfd(int port); 
+int Open_listenfd(int port);
+
+void* workerThreadMain(void* m);
 
 #endif /* __CSAPP_H__ */

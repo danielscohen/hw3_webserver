@@ -1,5 +1,6 @@
 #include "segel.h"
 #include "request.h"
+#include "queue.h"
 
 // 
 // server.c: A very, very simple web server
@@ -12,21 +13,8 @@
 //
 
 // HW3: Parse the new arguments too
-typedef struct Request{
-    int connfd;
-    char buf[MAXLINE];
-    char method[MAXLINE];
-    char uri[MAXLINE];
-    char version[MAXLINE];
-    char filename[MAXLINE];
-    char cgiargs[MAXLINE];
-} Request;
 
-pthread_t *waitingReqs;
-pthread_t *processingReqs;
 
-pthread_cond_t c;
-pthread_mutex_t m;
 
 void getargs(int *port, int *threads, int *queueSize, char *schedalg, int argc, char *argv[])
 {
@@ -43,6 +31,7 @@ void getargs(int *port, int *threads, int *queueSize, char *schedalg, int argc, 
 
 int main(int argc, char *argv[])
 {
+    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     int listenfd, connfd, port, clientlen, numThreads, queueSize;
     char* schedalg;
     struct sockaddr_in clientaddr;
@@ -53,8 +42,6 @@ int main(int argc, char *argv[])
     // HW3: Create some numThreads...
     //
     pthread_t *threads = malloc(sizeof (pthread_t) * numThreads);
-    waitingReqs = malloc(sizeof (Request) * queueSize);
-    processingReqs = malloc(sizeof (Request) * queueSize);
     for(int i = 0; i < numThreads; i++){
         int res = pthread_create(&threads[i], NULL, requestHandle, NULL);
         if(res) posix_error(res, "Posix Error!!");
@@ -65,6 +52,17 @@ int main(int argc, char *argv[])
     while (1) {
 	clientlen = sizeof(clientaddr);
 	connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+    rio_t rio;
+
+    Rio_readinitb(&rio, connfd);
+    Rio_readlineb(&rio, buf, MAXLINE);
+    sscanf(buf, "%s %s %s", method, uri, version);
+    Request request;
+    strcpy(request.method, method);
+    strcpy(request.uri, uri);
+    strcpy(request.version, version);
+    request.connfd = connfd;
+	enqueue(request);
 
 	// 
 	// HW3: In general, don't handle the request in the main thread.

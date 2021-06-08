@@ -152,7 +152,7 @@ void requestServeStatic(int fd, char *filename, int filesize)
 }
 
 // handle a request
-void* requestHandle(void* m)
+void requestHandle(Request req)
 {
 
    int is_static;
@@ -161,9 +161,11 @@ void* requestHandle(void* m)
    char filename[MAXLINE], cgiargs[MAXLINE];
    rio_t rio;
 
-   Rio_readinitb(&rio, fd);
-   Rio_readlineb(&rio, buf, MAXLINE);
-   sscanf(buf, "%s %s %s", method, uri, version);
+    strcpy(method, req.method);
+    strcpy(uri, req.uri);
+    strcpy(version, req.version);
+    int fd = req.connfd;
+
 
    printf("%s %s %s\n", method, uri, version);
 

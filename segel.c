@@ -1,4 +1,6 @@
 #include "segel.h"
+#include "queue.h"
+#include "request.h"
 
 /************************** 
  * Error-handling functions
@@ -556,5 +558,15 @@ int Open_listenfd(int port)
         unix_error("Open_listenfd error");
     return rc;
 }
+
+void *workerThreadMain(void *m) {
+    while(1){
+        Request req = dequeue();
+        requestHandle(req);
+    }
+
+}
+
+
 
 
