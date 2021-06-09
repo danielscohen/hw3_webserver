@@ -2,4 +2,6 @@
 
 void requestHandle(Request);
 
+void requestReadhdrs(rio_t *rp);
+
 #endif

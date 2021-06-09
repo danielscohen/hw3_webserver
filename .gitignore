@@ -1,6 +1,6 @@
 
-# Created by https://www.gitignore.io/api/c++,clion
-# Edit at https://www.gitignore.io/?templates=c++,clion
+# Created by https://www.gitignore.io/api/c1++,clion
+# Edit at https://www.gitignore.io/?templates=c1++,clion
 
 ### C++ ###
 # Prerequisites
@@ -118,4 +118,4 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
-# End of https://www.gitignore.io/api/c++,clion
+# End of https://www.gitignore.io/api/c1++,clion

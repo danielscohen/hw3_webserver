@@ -3,9 +3,6 @@
 #include "request.h"
 
 
-pthread_cond_t c = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-int queueSize = 0;
 
 /************************** 
  * Error-handling functions
@@ -564,10 +561,15 @@ int Open_listenfd(int port)
     return rc;
 }
 
-void *workerThreadMain(void *m) {
+void *workerThreadMain(void *a) {
     while(1){
         Request req = dequeue();
         requestHandle(req);
+        Close(req.connfd);
+        pthread_mutex_lock(&m);
+        buffAvailable++;
+        pthread_cond_signal(&c2);
+        pthread_mutex_unlock(&m);
     }
 
 }

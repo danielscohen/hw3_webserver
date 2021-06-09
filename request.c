@@ -1,5 +1,5 @@
 //
-// request.c: Does the bulk of the work for the web server.
+// request.c1: Does the bulk of the work for the web server.
 // 
 
 #include "segel.h"
@@ -157,9 +157,8 @@ void requestHandle(Request req)
 
    int is_static;
    struct stat sbuf;
-   char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+   char  method[MAXLINE], uri[MAXLINE], version[MAXLINE];
    char filename[MAXLINE], cgiargs[MAXLINE];
-   rio_t rio;
 
     strcpy(method, req.method);
     strcpy(uri, req.uri);
@@ -169,11 +168,10 @@ void requestHandle(Request req)
 
    printf("%s %s %s\n", method, uri, version);
 
-   if (strcasecmp(method, "GET")) {
+    if (strcasecmp(method, "GET")) {
       requestError(fd, method, "501", "Not Implemented", "OS-HW3 Server does not implement this method");
       return;
    }
-   requestReadhdrs(&rio);
 
    is_static = requestParseURI(uri, filename, cgiargs);
    if (stat(filename, &sbuf) < 0) {

@@ -23,6 +23,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "queue.h"
 
 
 /* Default file permissions are DEF_MODE & ~DEF_UMASK */
@@ -50,21 +51,12 @@ typedef struct {
 /* External variables */
 extern int h_errno;    /* defined by BIND for DNS errors */ 
 extern char **environ; /* defined by libc */
-pthread_cond_t c;
-pthread_mutex_t m;
-int queueSize;
 
 /* Misc constants */
 #define MAXLINE  8192  /* max text line length */
 #define MAXBUF   8192  /* max I/O buffer size */
 #define LISTENQ  1024  /* second argument to listen() */
 
-typedef struct Request{
-    int connfd;
-    char method[MAXLINE];
-    char uri[MAXLINE];
-    char version[MAXLINE];
-} Request;
 
 /* Our own error-handling functions */
 void unix_error(char *msg);

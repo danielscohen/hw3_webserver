@@ -3,13 +3,13 @@
 #include "queue.h"
 
 // 
-// server.c: A very, very simple web server
+// server.c1: A very, very simple web server
 //
 // To run:
 //  ./server <portnum (above 2000)>
 //
 // Repeatedly handles HTTP requests sent to this port number.
-// Most of the work is done within routines written in request.c
+// Most of the work is done within routines written in request.c1
 //
 
 // HW3: Parse the new arguments too
@@ -32,11 +32,11 @@ void getargs(int *port, int *threads, int *queueSize, char *schedalg, int argc, 
 int main(int argc, char *argv[])
 {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    int listenfd, connfd, port, clientlen, numThreads, queueSize;
-    char* schedalg;
+    int listenfd, connfd, port, clientlen, numThreads;
+    char schedalg[MAXLINE];
     struct sockaddr_in clientaddr;
 
-    getargs(&port, &numThreads, &queueSize, schedalg, argc, argv);
+    getargs(&port, &numThreads, &buffAvailable, schedalg, argc, argv);
 
     // 
     // HW3: Create some numThreads...
@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     Rio_readinitb(&rio, connfd);
     Rio_readlineb(&rio, buf, MAXLINE);
     sscanf(buf, "%s %s %s", method, uri, version);
+    requestReadhdrs(&rio);
     Request request;
     strcpy(request.method, method);
     strcpy(request.uri, uri);
@@ -70,7 +71,6 @@ int main(int argc, char *argv[])
 	// do the work. 
 	// 
 
-	Close(connfd);
     }
 
 }

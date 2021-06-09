@@ -7,6 +7,15 @@
 
 #include "segel.h"
 
+#define MAXLINE  8192  /* max text line length */
+
+typedef struct Request{
+    int connfd;
+    char method[MAXLINE];
+    char uri[MAXLINE];
+    char version[MAXLINE];
+} Request;
+
 typedef struct Node {
     Request request;
     struct Node *next;
@@ -17,4 +26,9 @@ Node *reqQueueHead;
 void enqueue(Request req);
 Request dequeue();
 
+pthread_cond_t c1;
+pthread_cond_t c2;
+pthread_mutex_t m;
+int queueSize;
+int buffAvailable;
 #endif //HW3_WEBSERVER_QUEUE_H
