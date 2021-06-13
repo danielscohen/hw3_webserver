@@ -22,8 +22,9 @@ typedef struct Node {
 } Node;
 
 Node *reqQueueHead;
+Node *reqQueueTail;
 
-void enqueue(Request req);
+void enqueue(Request req, char *schedalg);
 Request dequeue();
 
 pthread_cond_t c1;

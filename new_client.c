@@ -22,6 +22,7 @@
  */
 
 #include "segel.h"
+#define NUM_THREADS 17
 
 /*
  * Send an HTTP request for the specified file 
@@ -71,28 +72,39 @@ void clientPrint(int fd)
   }
 }
 
+void* threadfunction(void* p){
+    printf("in thread!!\n");
+    int clientfd;
+    char* host = ((char**)p)[1];
+    int port = atoi(((char**)p)[2]);
+    char* filename = ((char**)p)[3];
+    clientfd = Open_clientfd(host, port);
+
+    clientSend(clientfd, filename);
+    clientPrint(clientfd);
+
+    Close(clientfd);
+
+    exit(0);
+}
+
 int main(int argc, char *argv[])
 {
-  char *host, *filename;
-  int port;
-  int clientfd;
 
   if (argc != 4) {
     fprintf(stderr, "Usage: %s <host> <port> <filename>\n", argv[0]);
     exit(1);
   }
+    pthread_t *threads = malloc(sizeof (pthread_t) * NUM_THREADS);
+    for(int i = 0; i < NUM_THREADS; i++){
+        int res = pthread_create(&threads[i], NULL, threadfunction, argv);
+        if(res) posix_error(res, "Posix Error!!");
+    }
+    for(int i = 0; i < NUM_THREADS; i++){
+         pthread_join(threads[i], NULL);
+    }
 
-  host = argv[1];
-  port = atoi(argv[2]);
-  filename = argv[3];
 
   /* Open a single connection to the specified host and port */
-  clientfd = Open_clientfd(host, port);
-  
-  clientSend(clientfd, filename);
-  clientPrint(clientfd);
-    
-  Close(clientfd);
-
-  exit(0);
 }
+

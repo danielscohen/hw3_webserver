@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     while (1) {
 	clientlen = sizeof(clientaddr);
 	connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+	printf("accepted\n");
     rio_t rio;
 
     Rio_readinitb(&rio, connfd);
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
     strcpy(request.uri, uri);
     strcpy(request.version, version);
     request.connfd = connfd;
-	enqueue(request);
+    enqueue(request, NULL);
 
 	// 
 	// HW3: In general, don't handle the request in the main thread.
