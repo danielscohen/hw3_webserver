@@ -124,5 +124,6 @@ int Open_clientfd(char *hostname, int port);
 int Open_listenfd(int port);
 
 void* workerThreadMain(void* m);
+pid_t WaitPid(pid_t pid, int *status, int options);
 
 #endif /* __CSAPP_H__ */

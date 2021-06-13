@@ -10,6 +10,34 @@ pthread_cond_t c2 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
 int queueSize = 0;
 
+ struct timeval getCurrentTime(void){
+    struct timeval tv;
+    if(gettimeofday(&tv, NULL)){
+        unix_error("Time Of Day Error");
+    }
+    return tv;
+}
+
+struct timeval timeval_sub(struct timeval x, struct timeval y){
+     struct timeval res;
+    if (x.tv_usec < y.tv_usec) {
+        int nsec = (y.tv_usec - x.tv_usec) / 1000000 + 1;
+        y.tv_usec -= 1000000 * nsec;
+        y.tv_sec += nsec;
+    }
+    if (x.tv_usec - y.tv_usec > 1000000) {
+        int nsec = (x.tv_usec - y.tv_usec) / 1000000;
+        y.tv_usec += 1000000 * nsec;
+        y.tv_sec -= nsec;
+    }
+
+    res.tv_sec = x.tv_sec - y.tv_sec;
+    res.tv_usec = x.tv_usec - y.tv_usec;
+
+    return res;
+ }
+
+
 void enqueue(Request req, char *schedalg) {
     Node *node = malloc(sizeof(Node));
     if(node == NULL) app_error("Memory Allocation Error");

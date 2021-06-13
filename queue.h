@@ -14,12 +14,25 @@ typedef struct Request{
     char method[MAXLINE];
     char uri[MAXLINE];
     char version[MAXLINE];
+    struct timeval arrivalTime;
+    struct timeval dispatchInt;
 } Request;
 
 typedef struct Node {
     Request request;
     struct Node *next;
 } Node;
+
+typedef struct WorkerThread{
+    int id;
+    pthread_t threadId;
+    int threadCount;
+    int staticCount;
+    int dynamicCount;
+} WorkerThread;
+
+WorkerThread *workerThreads;
+int numWorkerThreads;
 
 Node *reqQueueHead;
 Node *reqQueueTail;
@@ -32,4 +45,7 @@ pthread_cond_t c2;
 pthread_mutex_t m;
 int queueSize;
 int buffAvailable;
+
+struct timeval getCurrentTime(void);
+struct timeval timeval_sub(struct timeval, struct timeval);
 #endif //HW3_WEBSERVER_QUEUE_H

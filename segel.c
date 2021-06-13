@@ -565,6 +565,7 @@ int Open_listenfd(int port)
 void *workerThreadMain(void *a) {
     while(1){
         Request req = dequeue();
+        req.dispatchInt = timeval_sub(getCurrentTime(), req.arrivalTime);
         requestHandle(req);
         Close(req.connfd);
         pthread_mutex_lock(&m);
@@ -572,6 +573,16 @@ void *workerThreadMain(void *a) {
         pthread_cond_signal(&c2);
         pthread_mutex_unlock(&m);
     }
+
+}
+
+pid_t WaitPid(pid_t pid, int *status, int options){
+
+    if((pid=waitpid(pid,status,options))<0)
+
+        unix_error("Wait error");
+
+    return pid;
 
 }
 

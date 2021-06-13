@@ -41,10 +41,15 @@ int main(int argc, char *argv[])
     // 
     // HW3: Create some numThreads...
     //
-    pthread_t *threads = malloc(sizeof (pthread_t) * numThreads);
+    workerThreads = malloc(sizeof (WorkerThread) * numThreads);
+    numWorkerThreads = numThreads;
     for(int i = 0; i < numThreads; i++){
-        int res = pthread_create(&threads[i], NULL, workerThreadMain, NULL);
+        int res = pthread_create(&(workerThreads[i].threadId), NULL, workerThreadMain, NULL);
         if(res) posix_error(res, "Posix Error!!");
+        workerThreads[i].id = i;
+        workerThreads[i].threadCount = 0;
+        workerThreads[i].staticCount = 0;
+        workerThreads[i].dynamicCount = 0;
     }
 
 
@@ -60,6 +65,7 @@ int main(int argc, char *argv[])
     sscanf(buf, "%s %s %s", method, uri, version);
     requestReadhdrs(&rio);
     Request request;
+    request.arrivalTime = getCurrentTime();
     strcpy(request.method, method);
     strcpy(request.uri, uri);
     strcpy(request.version, version);

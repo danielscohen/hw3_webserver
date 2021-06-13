@@ -101,7 +101,7 @@ void requestGetFiletype(char *filename, char *filetype)
       strcpy(filetype, "text/plain");
 }
 
-void requestServeDynamic(int fd, char *filename, char *cgiargs)
+void requestServeDynamic(int fd, char *filename, char *cgiargs, WorkerThread wThread, Request req)
 {
    char buf[MAXLINE], *emptylist[] = {NULL};
 
@@ -112,18 +112,19 @@ void requestServeDynamic(int fd, char *filename, char *cgiargs)
 
    Rio_writen(fd, buf, strlen(buf));
 
-   if (Fork() == 0) {
+   pid_t cfd = fork();
+   if (cfd == 0) {
       /* Child process */
       Setenv("QUERY_STRING", cgiargs, 1);
       /* When the CGI process writes to stdout, it will instead go to the socket */
       Dup2(fd, STDOUT_FILENO);
       Execve(filename, emptylist, environ);
    }
-   Wait(NULL);
+   WaitPid(cfd, NULL, 0);
 }
 
 
-void requestServeStatic(int fd, char *filename, int filesize) 
+void requestServeStatic(int fd, char *filename, int filesize, WorkerThread wThread, Request req)
 {
    int srcfd;
    char *srcp, filetype[MAXLINE], buf[MAXBUF];
@@ -142,12 +143,12 @@ void requestServeStatic(int fd, char *filename, int filesize)
    sprintf(buf, "%sServer: OS-HW3 Web Server\r\n", buf);
    sprintf(buf, "%sContent-Length: %d\r\n", buf, filesize);
    sprintf(buf, "%sContent-Type: %s\r\n\r\n", buf, filetype);
-   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, stats.arrival_time.tv_sec, stats.arrival_time.tv_usec);
-   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, stats.dispatch_interval.tv_sec, stats.dispatch_interval.tv_usec);
-   sprintf(buf, "%sStat-Thread-Id:: %d\r\n", buf, stats.handler_thread_stats.handler_thread_id);
-   sprintf(buf, "%sStat-Thread-Count:: %d\r\n", buf, stats.handler_thread_stats.handler_thread_req_count);
-   sprintf(buf, "%sStat-Thread-Static:: %d\r\n", buf, stats.handler_thread_stats.handler_thread_static_req_count);
-   sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, stats.handler_thread_stats.handler_thread_dynamic_req_count);
+   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, req.arrivalTime.tv_sec, req.arrivalTime.tv_usec);
+   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, req.dispatchInt.tv_sec, req.dispatchInt.tv_usec);
+   sprintf(buf, "%sStat-Thread-Id:: %d\r\n", buf, wThread.id);
+   sprintf(buf, "%sStat-Thread-Count:: %d\r\n", buf, wThread.threadCount);
+   sprintf(buf, "%sStat-Thread-Static:: %d\r\n", buf, wThread.staticCount);
+   sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, wThread.dynamicCount);
 
    Rio_writen(fd, buf, strlen(buf));
 
@@ -171,6 +172,17 @@ void requestHandle(Request req)
     strcpy(version, req.version);
     int fd = req.connfd;
 
+    WorkerThread wThread;
+
+    for(int i = 0; i < numWorkerThreads; i++){
+        if(workerThreads[i].threadId == pthread_self()){
+            wThread = workerThreads[i];
+            break;
+        }
+    }
+
+    wThread.threadCount++;
+
 
    printf("%s %s %s\n", method, uri, version);
 
@@ -190,13 +202,15 @@ void requestHandle(Request req)
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not read this file");
          return;
       }
-      requestServeStatic(fd, filename, sbuf.st_size);
+      wThread.staticCount++;
+       requestServeStatic(fd, filename, sbuf.st_size, wThread, req);
    } else {
       if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not run this CGI program");
          return;
       }
-      requestServeDynamic(fd, filename, cgiargs);
+      wThread.dynamicCount++;
+       requestServeDynamic(fd, filename, cgiargs, wThread, req);
    }
 }
 
