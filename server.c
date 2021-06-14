@@ -41,15 +41,15 @@ int main(int argc, char *argv[])
     // 
     // HW3: Create some numThreads...
     //
-    workerThreads = malloc(sizeof (WorkerThread) * numThreads);
-    numWorkerThreads = numThreads;
+    pthread_t *wThreads = malloc(sizeof(pthread_t) * numThreads);
     for(int i = 0; i < numThreads; i++){
-        int res = pthread_create(&(workerThreads[i].threadId), NULL, workerThreadMain, NULL);
+        WorkerThread *wThread= malloc(sizeof(WorkerThread));
+        wThread->id = i;
+        wThread->threadCount = 0;
+        wThread->staticCount = 0;
+        wThread->dynamicCount = 0;
+        int res = pthread_create(&wThreads[i], NULL, workerThreadMain, wThread);
         if(res) posix_error(res, "Posix Error!!");
-        workerThreads[i].id = i;
-        workerThreads[i].threadCount = 0;
-        workerThreads[i].staticCount = 0;
-        workerThreads[i].dynamicCount = 0;
     }
 
 
@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     while (1) {
 	clientlen = sizeof(clientaddr);
 	connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
-	printf("accepted\n");
     rio_t rio;
 
     Rio_readinitb(&rio, connfd);
@@ -70,7 +69,7 @@ int main(int argc, char *argv[])
     strcpy(request.uri, uri);
     strcpy(request.version, version);
     request.connfd = connfd;
-    enqueue(request, NULL);
+    enqueue(request, schedalg);
 
 	// 
 	// HW3: In general, don't handle the request in the main thread.

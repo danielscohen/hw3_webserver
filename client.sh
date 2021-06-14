@@ -1,5 +1,6 @@
 #!/bin/bash
-for i in {1..$4}
+for i in $(seq "$4")
 do
-    ./client $1 $2 $3
+    echo "sending...\n"
+    ./client $1 $2 $3 &
 done

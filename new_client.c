@@ -22,7 +22,7 @@
  */
 
 #include "segel.h"
-#define NUM_THREADS 17
+#define NUM_THREADS 5
 
 /*
  * Send an HTTP request for the specified file 

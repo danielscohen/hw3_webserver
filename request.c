@@ -101,7 +101,7 @@ void requestGetFiletype(char *filename, char *filetype)
       strcpy(filetype, "text/plain");
 }
 
-void requestServeDynamic(int fd, char *filename, char *cgiargs, WorkerThread wThread, Request req)
+void requestServeDynamic(int fd, char *filename, char *cgiargs, WorkerThread *wThreadData, Request req)
 {
    char buf[MAXLINE], *emptylist[] = {NULL};
 
@@ -109,6 +109,12 @@ void requestServeDynamic(int fd, char *filename, char *cgiargs, WorkerThread wTh
    // The CGI script has to finish writing out the header.
    sprintf(buf, "HTTP/1.0 200 OK\r\n");
    sprintf(buf, "%sServer: OS-HW3 Web Server\r\n", buf);
+    sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, req.arrivalTime.tv_sec, req.arrivalTime.tv_usec);
+    sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, req.dispatchInt.tv_sec, req.dispatchInt.tv_usec);
+    sprintf(buf, "%sStat-Thread-Id:: %d\r\n", buf, wThreadData->id);
+    sprintf(buf, "%sStat-Thread-Count:: %d\r\n", buf, wThreadData->threadCount);
+    sprintf(buf, "%sStat-Thread-Static:: %d\r\n", buf, wThreadData->staticCount);
+    sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, wThreadData->dynamicCount);
 
    Rio_writen(fd, buf, strlen(buf));
 
@@ -124,7 +130,7 @@ void requestServeDynamic(int fd, char *filename, char *cgiargs, WorkerThread wTh
 }
 
 
-void requestServeStatic(int fd, char *filename, int filesize, WorkerThread wThread, Request req)
+void requestServeStatic(int fd, char *filename, int filesize, WorkerThread *wThreadData, Request req)
 {
    int srcfd;
    char *srcp, filetype[MAXLINE], buf[MAXBUF];
@@ -145,10 +151,10 @@ void requestServeStatic(int fd, char *filename, int filesize, WorkerThread wThre
    sprintf(buf, "%sContent-Type: %s\r\n\r\n", buf, filetype);
    sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, req.arrivalTime.tv_sec, req.arrivalTime.tv_usec);
    sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, req.dispatchInt.tv_sec, req.dispatchInt.tv_usec);
-   sprintf(buf, "%sStat-Thread-Id:: %d\r\n", buf, wThread.id);
-   sprintf(buf, "%sStat-Thread-Count:: %d\r\n", buf, wThread.threadCount);
-   sprintf(buf, "%sStat-Thread-Static:: %d\r\n", buf, wThread.staticCount);
-   sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, wThread.dynamicCount);
+   sprintf(buf, "%sStat-Thread-Id:: %d\r\n", buf, wThreadData->id);
+   sprintf(buf, "%sStat-Thread-Count:: %d\r\n", buf, wThreadData->threadCount);
+   sprintf(buf, "%sStat-Thread-Static:: %d\r\n", buf, wThreadData->staticCount);
+   sprintf(buf, "%sStat-Thread-Dynamic:: %d\r\n\r\n", buf, wThreadData->dynamicCount);
 
    Rio_writen(fd, buf, strlen(buf));
 
@@ -159,7 +165,7 @@ void requestServeStatic(int fd, char *filename, int filesize, WorkerThread wThre
 }
 
 // handle a request
-void requestHandle(Request req)
+void requestHandle(Request req, WorkerThread *wThreadData)
 {
 
    int is_static;
@@ -167,22 +173,13 @@ void requestHandle(Request req)
    char  method[MAXLINE], uri[MAXLINE], version[MAXLINE];
    char filename[MAXLINE], cgiargs[MAXLINE];
 
+
     strcpy(method, req.method);
     strcpy(uri, req.uri);
     strcpy(version, req.version);
     int fd = req.connfd;
 
-    WorkerThread wThread;
-
-    for(int i = 0; i < numWorkerThreads; i++){
-        if(workerThreads[i].threadId == pthread_self()){
-            wThread = workerThreads[i];
-            break;
-        }
-    }
-
-    wThread.threadCount++;
-
+    wThreadData->threadCount++;
 
    printf("%s %s %s\n", method, uri, version);
 
@@ -202,15 +199,15 @@ void requestHandle(Request req)
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not read this file");
          return;
       }
-      wThread.staticCount++;
-       requestServeStatic(fd, filename, sbuf.st_size, wThread, req);
+      wThreadData->staticCount++;
+       requestServeStatic(fd, filename, sbuf.st_size, wThreadData, req);
    } else {
       if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) {
          requestError(fd, filename, "403", "Forbidden", "OS-HW3 Server could not run this CGI program");
          return;
       }
-      wThread.dynamicCount++;
-       requestServeDynamic(fd, filename, cgiargs, wThread, req);
+      wThreadData->dynamicCount++;
+       requestServeDynamic(fd, filename, cgiargs, wThreadData, req);
    }
 }
 

@@ -58,6 +58,8 @@ void enqueue(Request req, char *schedalg) {
             reqQueueHead->next = temp->next;
             if(temp->next == NULL) reqQueueTail = reqQueueHead;
             free(temp);
+            buffAvailable++;
+            queueSize--;
         } else {
             int numToDrop = (queueSize + 3) / 4;
             int *toDrop = malloc(sizeof(int) * numToDrop);
@@ -97,6 +99,8 @@ void enqueue(Request req, char *schedalg) {
             reqQueueHead->next = temp->next;
             if(temp->next == NULL) reqQueueTail = reqQueueHead;
             free(temp);
+            buffAvailable += numToDrop;
+            queueSize -= numToDrop;
         }
     }
     if(reqQueueHead == NULL){
@@ -109,6 +113,10 @@ void enqueue(Request req, char *schedalg) {
 
     reqQueueTail->next = node;
     reqQueueTail = node;
+    for(Node *n = reqQueueHead->next; n != NULL; n=n->next){
+        printf("%d == ", n->request.connfd);
+    }
+    printf("\n");
     queueSize++;
     buffAvailable--;
     pthread_cond_signal(&c1);
@@ -120,6 +128,10 @@ Request dequeue() {
     while(queueSize == 0){
         pthread_cond_wait(&c1, &m);
     }
+//    for(Node *n = reqQueueHead->next; n != NULL; n=n->next){
+//        printf("%d == ", n->request.connfd);
+//    }
+//    printf("\n");
 
     Node *node = reqQueueHead->next;
     reqQueueHead->next = node->next;

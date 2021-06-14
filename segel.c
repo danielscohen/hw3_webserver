@@ -222,7 +222,6 @@ void Listen(int s, int backlog)
 
 int Accept(int s, struct sockaddr *addr, socklen_t *addrlen) 
 {
-    printf("accepting\n");
     int rc;
 
     if ((rc = accept(s, addr, addrlen)) < 0)
@@ -562,11 +561,13 @@ int Open_listenfd(int port)
     return rc;
 }
 
-void *workerThreadMain(void *a) {
+void *workerThreadMain(void *wThread) {
+    WorkerThread *wThreadData = (WorkerThread *) wThread;
+
     while(1){
         Request req = dequeue();
         req.dispatchInt = timeval_sub(getCurrentTime(), req.arrivalTime);
-        requestHandle(req);
+        requestHandle(req, wThreadData);
         Close(req.connfd);
         pthread_mutex_lock(&m);
         buffAvailable++;
